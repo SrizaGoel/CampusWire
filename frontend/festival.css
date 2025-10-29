@@ -1,0 +1,272 @@
+/* festival.css - Enhanced with festival themes */
+:root {
+  --primary: #2563eb;
+  --secondary: #1e40af;
+  --background: linear-gradient(180deg, #f8fafc, #eef2ff);
+  --text: #111827;
+  --card-bg: rgba(255,255,255,0.95);
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+  background: var(--background);
+  margin: 0;
+  color: var(--text);
+  transition: all 0.3s ease;
+}
+
+.container {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+  background: var(--card-bg);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(15,23,42,0.1);
+  backdrop-filter: blur(10px);
+}
+
+/* Festival Theme Classes */
+.theme-diwali {
+  --primary: #ffd700;
+  --secondary: #ff9933;
+  --background: linear-gradient(135deg, #ff6b6b, #ffd93d, #6bcf7f);
+  --text: #7c2d12;
+  --card-bg: rgba(255, 255, 255, 0.92);
+}
+
+.theme-christmas {
+  --primary: #b30000;
+  --secondary: #165b33;
+  --background: linear-gradient(135deg, #b30000, #165b33, #ffffff);
+  --text: #0f172a;
+  --card-bg: rgba(255, 255, 255, 0.95);
+}
+
+.theme-holi {
+  --primary: #ec4899;
+  --secondary: #8b5cf6;
+  --background: linear-gradient(135deg, #ec4899, #8b5cf6, #06b6d4);
+  --text: #1e293b;
+  --card-bg: rgba(255, 255, 255, 0.9);
+}
+
+.theme-eid {
+  --primary: #059669;
+  --secondary: #dc2626;
+  --background: linear-gradient(135deg, #059669, #dc2626, #fbbf24);
+  --text: #1e293b;
+  --card-bg: rgba(255, 255, 255, 0.92);
+}
+
+/* Festival Banner */
+.festival-banner {
+  background: var(--primary);
+  color: white;
+  padding: 15px;
+  text-align: center;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-weight: bold;
+  font-size: 1.2em;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Form Styles */
+input, textarea, select {
+  width: 100%;
+  padding: 12px 16px;
+  margin: 8px 0;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  background: rgba(255,255,255,0.8);
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+button {
+  padding: 12px 24px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  margin: 5px;
+}
+
+button:hover {
+  background: var(--secondary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Layout */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+/* Post Cards */
+.card {
+  background: var(--card-bg);
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(255,255,255,0.5);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+.meta {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.emotion {
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.emotion span {
+  font-weight: 600;
+  color: var(--primary);
+  padding: 4px 8px;
+  background: rgba(37, 99, 235, 0.1);
+  border-radius: 6px;
+}
+
+/* Emotion-specific colors */
+.emotion-Happy span { color: #059669; background: rgba(5, 150, 105, 0.1); }
+.emotion-Sad span { color: #dc2626; background: rgba(220, 38, 38, 0.1); }
+.emotion-Angry span { color: #b91c1c; background: rgba(185, 28, 28, 0.1); }
+.emotion-Excited span { color: #7c3aed; background: rgba(124, 58, 237, 0.1); }
+.emotion-Neutral span { color: #6b7280; background: rgba(107, 114, 128, 0.1); }
+
+/* Post Form */
+#postForm {
+  background: var(--card-bg);
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    margin: 10px;
+    padding: 15px;
+  }
+  
+  .topbar {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+}
+/* Seasonal Theme Classes */
+.theme-winter {
+  --primary: #0369a1;
+  --secondary: #7dd3fc;
+  --background: linear-gradient(135deg, #0369a1, #7dd3fc, #e0f2fe);
+  --text: #0c4a6e;
+  --card-bg: rgba(255, 255, 255, 0.92);
+}
+
+.theme-valentine {
+  --primary: #be185d;
+  --secondary: #f472b6;
+  --background: linear-gradient(135deg, #be185d, #f472b6, #fce7f3);
+  --text: #831843;
+  --card-bg: rgba(255, 255, 255, 0.92);
+}
+
+.theme-spring {
+  --primary: #65a30d;
+  --secondary: #a3e635;
+  --background: linear-gradient(135deg, #65a30d, #a3e635, #ecfccb);
+  --text: #365314;
+  --card-bg: rgba(255, 255, 255, 0.92);
+}
+
+.theme-blossom {
+  --primary: #c026d3;
+  --secondary: #f0abfc;
+  --background: linear-gradient(135deg, #c026d3, #f0abfc, #fae8ff);
+  --text: #86198f;
+  --card-bg: rgba(255, 255, 255, 0.92);
+}
+
+.theme-summer {
+  --primary: #ea580c;
+  --secondary: #fdba74;
+  --background: linear-gradient(135deg, #ea580c, #fdba74, #ffedd5);
+  --text: #9a3412;
+  --card-bg: rgba(255, 255, 255, 0.92);
+}
+
+.theme-monsoon {
+  --primary: #0ea5e9;
+  --secondary: #7dd3fc;
+  --background: linear-gradient(135deg, #0ea5e9, #7dd3fc, #e0f2fe);
+  --text: #075985;
+  --card-bg: rgba(255, 255, 255, 0.92);
+}
+
+.theme-freedom {
+  --primary: #1d4ed8;
+  --secondary: #60a5fa;
+  --background: linear-gradient(135deg, #1d4ed8, #60a5fa, #dbeafe);
+  --text: #1e3a8a;
+  --card-bg: rgba(255, 255, 255, 0.92);
+}
+
+.theme-sunshine {
+  --primary: #eab308;
+  --secondary: #fef08a;
+  --background: linear-gradient(135deg, #eab308, #fef08a, #fefce8);
+  --text: #854d0e;
+  --card-bg: rgba(255, 255, 255, 0.92);
+}
+
+.theme-autumn {
+  --primary: #ea580c;
+  --secondary: #fdba74;
+  --background: linear-gradient(135deg, #ea580c, #fdba74, #fff7ed);
+  --text: #9a3412;
+  --card-bg: rgba(255, 255, 255, 0.92);
+}
+
+.theme-campuswire {
+  --primary: #2563eb;
+  --secondary: #1e40af;
+  --background: linear-gradient(135deg, #2563eb, #1e40af, #dbeafe);
+  --text: #1e293b;
+  --card-bg: rgba(255, 255, 255, 0.92);
+}

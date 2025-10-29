@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Campuswire — Login</title>
+  <link rel="stylesheet" href="festival.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Campuswire — Login</h1>
+    <form id="loginForm">
+      <input name="email" placeholder="Email" required />
+      <input type="password" name="password" placeholder="Password" required />
+      <button type="submit">Login</button>
+    </form>
+    <p>New? <a href="index.html">Sign up</a></p>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      try {
+        const res = await fetch((window.API_BASE || 'http://localhost:4000') + '/api/auth/login', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ email: form.email.value, password: form.password.value })
+        });
+        const j = await res.json();
+        if (!res.ok) throw new Error(j.message || 'Login failed');
+        localStorage.setItem('cw_token', j.token);
+        location.href = 'feed.html';
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  </script>
+</body>
+</html>

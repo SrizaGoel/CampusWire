@@ -1,0 +1,139 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Campuswire — Feed</title>
+  <link rel="stylesheet" href="festival.css">
+</head>
+<body>
+  <div class="container">
+    <div class="topbar">
+      <h2>Campuswire Feed</h2>
+      <button id="logoutBtn">Logout</button>
+    </div>
+
+    <form id="postForm">
+      <textarea name="content" placeholder="What's up?" required></textarea>
+      <select name="emotion">
+        <option value="Neutral">Neutral</option>
+        <option value="Happy">Happy</option>
+        <option value="Sad">Sad</option>
+        <option value="Angry">Angry</option>
+        <option value="Excited">Excited</option>
+      </select>
+      <button type="submit">Post</button>
+    </form>
+
+    <h3>Recent posts</h3>
+    <div id="posts"></div>
+  </div>
+
+  <script src="script.js"></script>
+  <script>
+    const API = 'http://localhost:4000';
+    const token = localStorage.getItem('cw_token');
+    
+    console.log('Token found:', !!token);
+    
+    if (!token) {
+        console.log('No token, redirecting to login');
+        location.href = 'login.html';
+    }
+
+    document.getElementById('logoutBtn').onclick = () => { 
+        localStorage.removeItem('cw_token'); 
+        location.href = 'login.html'; 
+    };
+
+    async function loadFeed() {
+        console.log('Loading feed...');
+        try {
+            const res = await fetch(API + '/api/posts/feed', {
+                headers: { 
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            console.log('Response status:', res.status);
+            
+            if (!res.ok) {
+                throw new Error('Failed to load feed: ' + res.status);
+            }
+            
+            const posts = await res.json();
+            console.log('Posts loaded:', posts);
+            
+            const el = document.getElementById('posts');
+            if (posts.length === 0) {
+                el.innerHTML = '<p>No posts yet. Be the first to post!</p>';
+            } else {
+                el.innerHTML = posts.map(p => `
+                <div class="card">
+                    <div class="meta"><strong>${p.name}</strong> · ${new Date(p.created_at).toLocaleString()}</div>
+                    <p>${p.content}</p>
+                    <div class="emotion">Emotion: <span>${p.emotion}</span></div>
+                    <button onclick="flagPost(${p.post_id})">Flag</button>
+                </div>
+                `).join('');
+            }
+        } catch (err) {
+            console.error('Error loading feed:', err);
+            document.getElementById('posts').innerHTML = '<p>Error loading feed</p>';
+        }
+    }
+
+    async function flagPost(id) {
+        if (!confirm('Flag this post as inappropriate?')) return;
+        try {
+            const res = await fetch(API + '/api/posts/' + id + '/flag', {
+                method: 'POST',
+                headers: { 
+                    'Authorization': 'Bearer ' + token,
+                    'Content-Type': 'application/json'
+                }
+            });
+            const j = await res.json();
+            alert(j.message || 'Post flagged');
+            loadFeed();
+        } catch (err) {
+            alert('Error flagging post');
+        }
+    }
+
+    document.getElementById('postForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const f = e.target;
+        const body = { 
+            content: f.content.value, 
+            emotion: f.emotion.value 
+        };
+        
+        console.log('Creating post:', body);
+        
+        try {
+            const res = await fetch(API + '/api/posts', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': 'Bearer ' + token 
+                },
+                body: JSON.stringify(body)
+            });
+            
+            const j = await res.json();
+            if (!res.ok) throw new Error(j.message || 'Post failed');
+            
+            alert('Posted successfully!');
+            f.content.value = '';
+            loadFeed();
+        } catch (err) {
+            alert('Error: ' + err.message);
+        }
+    });
+
+    // Load feed when page loads
+    loadFeed();
+</script>
+</body>
+</html>
