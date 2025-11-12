@@ -106,16 +106,93 @@ class CampusBuzz {
     }
 
     async loadFeed() {
-        try {
-            const data = await this.apiCall('/posts/');
-            this.posts = data;
-            this.renderPosts();
-            this.updateStats();
-        } catch (error) {
-            console.error('Failed to load feed:', error);
+    try {
+        const data = await this.apiCall('/posts/');
+        this.posts = data;
+        this.renderPosts();
+        this.updateStats();
+        
+        // Load reactions for each post
+        this.posts.forEach(post => {
+            this.loadReactions(post.post_id);
+        });
+    } catch (error) {
+        console.error('Failed to load feed:', error);
+    }
+}
+
+async loadLikeCounts() {
+    // This would typically load like counts from your backend
+    // For now, we'll simulate it
+    this.posts.forEach(post => {
+        const likeCount = document.getElementById(`like-count-${post.post_id}`);
+        if (likeCount) {
+            likeCount.textContent = post.like_count || Math.floor(Math.random() * 50);
         }
+    });
+}
+escapeHTML(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+getTimeAgo(date) {
+    const now = new Date();
+    const diff = now - date;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (days > 0) return `${days}d ago`;
+    if (hours > 0) return `${hours}h ago`;
+    if (minutes > 0) return `${minutes}m ago`;
+    return 'Just now';
+}
+async createPost() {
+    const content = document.getElementById('postContent').value.trim();
+    const emotion = document.getElementById('postEmotion').value;
+    const imageInput = document.getElementById('postImage');
+    
+    if (!content) {
+        this.showToast('Please write something to post', 'warning');
+        return;
     }
 
+    const formData = new FormData();
+    formData.append('content', content);
+    formData.append('emotion', emotion);
+    
+    if (imageInput.files[0]) {
+        formData.append('image', imageInput.files[0]);
+    }
+
+    try {
+        const response = await fetch('/posts/', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${this.token}`
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error);
+        }
+
+        this.showToast('Post created successfully!', 'success');
+        document.getElementById('postContent').value = '';
+        document.getElementById('postImage').value = '';
+        document.getElementById('imagePreview').innerHTML = '';
+        
+        await this.loadFeed();
+    } catch (error) {
+        this.showToast(error.message, 'error');
+    }
+}
     renderPosts() {
         const container = document.getElementById('feedPosts');
         const filteredPosts = this.currentFilter === 'all' 
@@ -137,174 +214,488 @@ class CampusBuzz {
     }
 
     createPostHTML(post) {
-        const emotionClass = `emotion-${post.emotion.toLowerCase()}`;
-        const timeAgo = this.getTimeAgo(new Date(post.created_at));
-        
-        return `
-            <div class="post-card" data-post-id="${post.post_id}">
-                <div class="post-header">
-                    <div class="post-user">
-                        <div class="user-avatar-small">
-                            <i class="fas fa-user-circle"></i>
-                        </div>
-                        <div class="user-details">
-                            <h4>${post.name}</h4>
-                            <div class="post-meta">${timeAgo}</div>
-                        </div>
+    const emotionClass = `emotion-${post.emotion.toLowerCase()}`;
+    const timeAgo = this.getTimeAgo(new Date(post.created_at));
+    
+    return `
+        <div class="post-card" data-post-id="${post.post_id}">
+            <div class="post-header">
+                <div class="post-user">
+                    <div class="user-avatar-small">
+                        <i class="fas fa-user-circle"></i>
                     </div>
-                    <span class="post-emotion ${emotionClass}">${post.emotion}</span>
-                </div>
-                
-                <div class="post-content">
-                    <p>${this.escapeHTML(post.content)}</p>
-                </div>
-                
-                ${post.image_path ? `
-                    <div class="post-image">
-                        <img src="${post.image_path}" alt="Post image" onerror="this.style.display='none'">
+                    <div class="user-details">
+                        <h4>${post.name}</h4>
+                        <div class="post-meta">${timeAgo}</div>
                     </div>
-                ` : ''}
-                
-                <div class="post-actions-bar">
-                    <button class="action-btn like-btn" onclick="app.likePost(${post.post_id})">
-                        <i class="fas fa-heart"></i>
+                </div>
+                <span class="post-emotion ${emotionClass}">${post.emotion}</span>
+            </div>
+            
+            <div class="post-content">
+                <p>${this.escapeHTML(post.content)}</p>
+            </div>
+            
+            ${post.image_path ? `
+                <div class="post-image">
+                    <img src="${post.image_path}" alt="Post image" onerror="this.style.display='none'">
+                </div>
+            ` : ''}
+            
+            <!-- Reactions Stats -->
+            <div class="post-stats" id="stats-${post.post_id}">
+                <div class="reactions-count" id="reactions-${post.post_id}" onclick="app.showLikesModal(${post.post_id})">
+                    <!-- Reactions will be loaded here -->
+                </div>
+                <div class="comments-count" id="comments-count-${post.post_id}">
+                    <!-- Comment count will be loaded here -->
+                </div>
+            </div>
+            
+            <!-- Post Actions -->
+            <div class="post-actions-bar">
+                <div class="reaction-btn-container">
+                    <!-- Main Like Button (Toggle) -->
+                    <button class="action-btn like-btn" onclick="app.toggleLike(${post.post_id})" 
+                            id="like-btn-${post.post_id}" data-current-reaction="">
+                        <i class="far fa-thumbs-up"></i>
                         <span>Like</span>
                     </button>
-                    <button class="action-btn comment-btn" onclick="app.toggleComments(${post.post_id})">
-                        <i class="fas fa-comment"></i>
-                        <span>Comment</span>
-                    </button>
-                    <button class="action-btn share-btn" onclick="app.sharePost(${post.post_id})">
-                        <i class="fas fa-share"></i>
-                        <span>Share</span>
-                    </button>
+                    
+                    <!-- Reaction Picker (for different reactions) -->
+                    <div class="reactions-picker" id="reactions-picker-${post.post_id}">
+                        <button class="reaction-option" data-reaction="like" title="Like">
+                            <i class="fas fa-thumbs-up"></i>
+                        </button>
+                        <button class="reaction-option" data-reaction="love" title="Love">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                        <button class="reaction-option" data-reaction="funny" title="Funny">
+                            <i class="fas fa-laugh"></i>
+                        </button>
+                        <button class="reaction-option" data-reaction="insightful" title="Insightful">
+                            <i class="fas fa-lightbulb"></i>
+                        </button>
+                    </div>
                 </div>
                 
-                <div class="comments-section" id="comments-${post.post_id}" style="display: none;">
-                    <div class="comment-input">
-                        <input type="text" id="comment-${post.post_id}" placeholder="Write a comment...">
-                        <button onclick="app.addComment(${post.post_id})">Post</button>
+                <button class="action-btn comment-btn" onclick="app.toggleComments(${post.post_id})">
+                    <i class="far fa-comment"></i>
+                    <span>Comment</span>
+                </button>
+            </div>
+            
+            <div class="comments-section" id="comments-${post.post_id}" style="display: none;">
+                <div class="comment-input">
+                    <input type="text" id="comment-${post.post_id}" placeholder="Write a comment..." onkeypress="if(event.key==='Enter') app.addComment(${post.post_id})">
+                    <button onclick="app.addComment(${post.post_id})">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="comment-list" id="comment-list-${post.post_id}">
+                    <!-- Comments will be loaded here -->
+                </div>
+            </div>
+        </div>
+    `;
+}
+async loadReactions(postId) {
+    try {
+        const data = await this.apiCall(`/react/reactions/${postId}`);
+        this.updateReactionsUI(postId, data);
+        this.loadCommentCount(postId); // ADD THIS LINE
+    } catch (error) {
+        console.error('Failed to load reactions:', error);
+    }
+}
+async loadCommentCount(postId) {
+    try {
+        const data = await this.apiCall(`/react/comments-count/${postId}`);
+        const commentsCount = document.getElementById(`comments-count-${postId}`);
+        
+        if (data.comment_count > 0) {
+            commentsCount.innerHTML = `
+                <span class="comments-count-text">
+                    ${data.comment_count} ${data.comment_count === 1 ? 'comment' : 'comments'}
+                </span>
+            `;
+        } else {
+            commentsCount.innerHTML = '';
+        }
+    } catch (error) {
+        console.error('Failed to load comment count:', error);
+    }
+}
+
+async showLikesModal(postId) {
+    try {
+        const likes = await this.apiCall(`/react/likes/${postId}`);
+        
+        const modal = document.getElementById('likesModal');
+        const likesList = document.getElementById('likesList');
+        
+        if (likes.length === 0) {
+            likesList.innerHTML = `
+                <div class="no-likes">
+                    <i class="far fa-thumbs-up"></i>
+                    <p>No reactions yet</p>
+                    <small>Be the first to react!</small>
+                </div>
+            `;
+        } else {
+            likesList.innerHTML = likes.map(like => `
+                <div class="like-item">
+                    <div class="user-avatar-small">
+                        <i class="fas fa-user-circle"></i>
                     </div>
-                    <div class="comment-list" id="comment-list-${post.post_id}">
-                        <!-- Comments will be loaded here -->
+                    <div class="like-details">
+                        <strong>${like.name}</strong>
+                        <div class="reaction-type">
+                            <i class="${this.getReactionIcon(like.reaction_type)}" style="color: ${this.getReactionColor(like.reaction_type)}"></i>
+                            ${this.getReactionText(like.reaction_type)}
+                        </div>
+                        <small>${this.getTimeAgo(new Date(like.created_at))}</small>
                     </div>
                 </div>
+            `).join('');
+        }
+        
+        modal.style.display = 'block';
+    } catch (error) {
+        console.error('Failed to load likes:', error);
+    }
+}
+
+getReactionIcon(reactionType) {
+    const icons = {
+        like: 'fas fa-thumbs-up',
+        love: 'fas fa-heart',
+        funny: 'fas fa-laugh',
+        insightful: 'fas fa-lightbulb'
+    };
+    return icons[reactionType] || 'fas fa-thumbs-up';
+}
+
+getReactionColor(reactionType) {
+    const colors = {
+        like: '#007bff',
+        love: '#e0245e',
+        funny: '#ffad1f',
+        insightful: '#17bf63'
+    };
+    return colors[reactionType] || '#007bff';
+}
+
+getReactionText(reactionType) {
+    const texts = {
+        like: 'Liked',
+        love: 'Loved',
+        funny: 'Found funny',
+        insightful: 'Found insightful'
+    };
+    return texts[reactionType] || 'Liked';
+}
+
+updateReactionsUI(postId, reactionData) {
+    const reactionsContainer = document.getElementById(`reactions-${postId}`);
+    const likeBtn = document.getElementById(`like-btn-${postId}`);
+    
+    if (!reactionsContainer) return;
+    
+    // Update reaction counts
+    const totalReactions = reactionData.counts.reduce((sum, r) => sum + parseInt(r.count), 0);
+    
+    if (totalReactions > 0) {
+        const topReactions = reactionData.counts.slice(0, 3);
+        const reactionIcons = {
+            like: 'fas fa-thumbs-up',
+            love: 'fas fa-heart',
+            funny: 'fas fa-laugh',
+            insightful: 'fas fa-lightbulb'
+        };
+        
+        reactionsContainer.innerHTML = `
+            <div class="reactions-display" onclick="app.showLikesModal(${postId})">
+                <div class="reaction-icons">
+                    ${topReactions.map(reaction => `
+                        <i class="${reactionIcons[reaction.reaction_type]}" style="color: ${
+                            reaction.reaction_type === 'like' ? '#007bff' :
+                            reaction.reaction_type === 'love' ? '#e0245e' :
+                            reaction.reaction_type === 'funny' ? '#ffad1f' : '#17bf63'
+                        }"></i>
+                    `).join('')}
+                </div>
+                <span class="reactions-text">
+                    ${totalReactions} ${totalReactions === 1 ? 'reaction' : 'reactions'}
+                </span>
+            </div>
+        `;
+    } else {
+        reactionsContainer.innerHTML = '';
+    }
+    
+    // Update like button based on user's reaction
+    if (reactionData.userReaction) {
+        const reactionType = reactionData.userReaction.reaction_type;
+        const buttonTexts = {
+            like: 'Liked',
+            love: 'Loved', 
+            funny: 'Funny',
+            insightful: 'Insightful'
+        };
+        
+        const buttonColors = {
+            like: '#007bff',
+            love: '#e0245e', 
+            funny: '#ffad1f',
+            insightful: '#17bf63'
+        };
+        
+        likeBtn.innerHTML = `
+            <i class="${this.getReactionIcon(reactionType)}"></i>
+            <span>${buttonTexts[reactionType]}</span>
+        `;
+        likeBtn.style.color = buttonColors[reactionType];
+        likeBtn.dataset.currentReaction = reactionType;
+        likeBtn.classList.add('active');
+    } else {
+        likeBtn.innerHTML = `
+            <i class="far fa-thumbs-up"></i>
+            <span>Like</span>
+        `;
+        likeBtn.style.color = '';
+        likeBtn.dataset.currentReaction = '';
+        likeBtn.classList.remove('active');
+    }
+}
+
+async toggleLike(postId) {
+    try {
+        const likeBtn = document.getElementById(`like-btn-${postId}`);
+        const currentReaction = likeBtn.dataset.currentReaction;
+        
+        // If user already liked, unlike. Otherwise, like.
+        const newReaction = currentReaction ? 'unlike' : 'like';
+        
+        const response = await this.apiCall('/react/react', {
+            method: 'POST',
+            body: JSON.stringify({ 
+                post_id: postId, 
+                reaction_type: newReaction === 'unlike' ? currentReaction : 'like'
+            })
+        });
+        
+        // Reload reactions to update UI
+        await this.loadReactions(postId);
+        
+        // Show appropriate toast
+        if (response.action === 'added') {
+            this.showToast('Liked', 'success');
+        } else if (response.action === 'removed') {
+            this.showToast('Like removed', 'info');
+        }
+        
+    } catch (error) {
+        console.error('Failed to toggle like:', error);
+    }
+}
+
+// Keep the reaction picker for different reaction types
+showReactions(postId) {
+    const picker = document.getElementById(`reactions-picker-${postId}`);
+    picker.style.display = picker.style.display === 'flex' ? 'none' : 'flex';
+    
+    // Hide other pickers
+    document.querySelectorAll('.reactions-picker').forEach(p => {
+        if (p.id !== `reactions-picker-${postId}`) {
+            p.style.display = 'none';
+        }
+    });
+}
+
+async reactToPost(postId, reactionType) {
+    try {
+        const likeBtn = document.getElementById(`like-btn-${postId}`);
+        const currentReaction = likeBtn.dataset.currentReaction;
+        
+        // If clicking the same reaction type, unlike it. Otherwise, apply new reaction.
+        const actionType = (currentReaction === reactionType) ? 'unlike' : 'like';
+        
+        const response = await this.apiCall('/react/react', {
+            method: 'POST',
+            body: JSON.stringify({ 
+                post_id: postId, 
+                reaction_type: actionType === 'unlike' ? currentReaction : reactionType
+            })
+        });
+        
+        // Hide picker
+        document.getElementById(`reactions-picker-${postId}`).style.display = 'none';
+        
+        // Reload reactions to update UI
+        await this.loadReactions(postId);
+        
+        // Show appropriate toast
+        if (response.action === 'added') {
+            const toastMessages = {
+                like: 'Liked',
+                love: 'Loved • Great!',
+                funny: 'Haha • Funny!', 
+                insightful: 'Insightful • Thanks for sharing!'
+            };
+            this.showToast(toastMessages[reactionType], 'success');
+        } else if (response.action === 'removed') {
+            this.showToast('Reaction removed', 'info');
+        } else if (response.action === 'updated') {
+            const toastMessages = {
+                like: 'Liked',
+                love: 'Loved • Great!',
+                funny: 'Haha • Funny!', 
+                insightful: 'Insightful • Thanks for sharing!'
+            };
+            this.showToast(toastMessages[reactionType], 'success');
+        }
+        
+    } catch (error) {
+        console.error('Failed to react:', error);
+    }
+}
+async likePost(postId) {
+    try {
+        const likeBtn = document.getElementById(`like-btn-${postId}`);
+        const likeIcon = likeBtn.querySelector('i');
+        const likeText = likeBtn.querySelector('span');
+        const likeCount = document.getElementById(`like-count-${postId}`);
+        
+        // Immediate visual feedback
+        likeIcon.className = 'fas fa-heart';
+        likeText.textContent = 'Liked';
+        likeBtn.classList.add('liked');
+        
+        // Update count immediately
+        const currentCount = parseInt(likeCount.textContent) || 0;
+        likeCount.textContent = currentCount + 1;
+        
+        // Send API request
+        await this.apiCall('/react/like', {
+            method: 'POST',
+            body: JSON.stringify({ post_id: postId })
+        });
+        
+        // Show LinkedIn-style toast
+        this.showToast('Liked • Insightful', 'success');
+        
+    } catch (error) {
+        // Revert if failed
+        const likeBtn = document.getElementById(`like-btn-${postId}`);
+        const likeIcon = likeBtn.querySelector('i');
+        const likeText = likeBtn.querySelector('span');
+        const likeCount = document.getElementById(`like-count-${postId}`);
+        
+        likeIcon.className = 'far fa-heart';
+        likeText.textContent = 'Like';
+        likeBtn.classList.remove('liked');
+        
+        const currentCount = parseInt(likeCount.textContent) || 0;
+        if (currentCount > 0) {
+            likeCount.textContent = currentCount - 1;
+        }
+        
+        console.error('Failed to like post:', error);
+    }
+}
+    // async sharePost(postId) {
+    //     try {
+    //         await this.apiCall('/react/share', {
+    //             method: 'POST',
+    //             body: JSON.stringify({ post_id: postId })
+    //         });
+    //         this.showToast('Post shared!', 'success');
+    //     } catch (error) {
+    //         console.error('Failed to share post:', error);
+    //     }
+    // }
+
+    async addComment(postId) {
+    const commentInput = document.getElementById(`comment-${postId}`);
+    const comment = commentInput.value.trim();
+    
+    if (!comment) {
+        this.showToast('Please write a comment', 'warning');
+        return;
+    }
+
+    try {
+        await this.apiCall('/react/comment', {
+            method: 'POST',
+            body: JSON.stringify({ 
+                post_id: postId, 
+                comment: comment 
+            })
+        });
+        
+        this.showToast('Comment added!', 'success');
+        commentInput.value = '';
+        
+        // FIX: Actually reload comments instead of just toggling
+        await this.loadComments(postId);
+        
+    } catch (error) {
+        console.error('Failed to add comment:', error);
+    }
+}
+
+async loadComments(postId) {
+    const commentList = document.getElementById(`comment-list-${postId}`);
+    commentList.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i><p>Loading comments...</p></div>';
+    
+    try {
+        const comments = await this.apiCall(`/react/comments/${postId}`);
+        
+        if (comments.length === 0) {
+            commentList.innerHTML = `
+                <div class="no-comments">
+                    <i class="far fa-comments"></i>
+                    <p>No comments yet</p>
+                    <small>Be the first to comment!</small>
+                </div>
+            `;
+        } else {
+            commentList.innerHTML = comments.map(comment => `
+                <div class="comment-item">
+                    <div class="comment-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="comment-content">
+                        <div class="comment-header">
+                            <strong class="comment-author">${comment.username || 'User'}</strong>
+                            <span class="comment-time">${this.getTimeAgo(new Date(comment.created_at))}</span>
+                        </div>
+                        <div class="comment-text">${this.escapeHTML(comment.comment_text)}</div>
+                        <div class="comment-actions">
+                            <button class="comment-like-btn" onclick="app.likeComment(${comment.reaction_id})">
+                                <i class="far fa-heart"></i>
+                                <span>Like</span>
+                            </button>
+                            <button class="comment-reply-btn">
+                                <i class="far fa-comment"></i>
+                                <span>Reply</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Failed to load comments:', error);
+        commentList.innerHTML = `
+            <div class="error-comments">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Failed to load comments</p>
             </div>
         `;
     }
-
-    escapeHTML(str) {
-        const div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-    }
-
-    getTimeAgo(date) {
-        const now = new Date();
-        const diff = now - date;
-        const minutes = Math.floor(diff / 60000);
-        const hours = Math.floor(diff / 3600000);
-        const days = Math.floor(diff / 86400000);
-
-        if (days > 0) return `${days}d ago`;
-        if (hours > 0) return `${hours}h ago`;
-        if (minutes > 0) return `${minutes}m ago`;
-        return 'Just now';
-    }
-
-    async createPost() {
-        const content = document.getElementById('postContent').value.trim();
-        const emotion = document.getElementById('postEmotion').value;
-        const imageInput = document.getElementById('postImage');
-        
-        if (!content) {
-            this.showToast('Please write something to post', 'warning');
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('content', content);
-        formData.append('emotion', emotion);
-        
-        if (imageInput.files[0]) {
-            formData.append('image', imageInput.files[0]);
-        }
-
-        try {
-            const response = await fetch('/posts/', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${this.token}`
-                },
-                body: formData
-            });
-
-            const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.error);
-            }
-
-            this.showToast('Post created successfully!', 'success');
-            document.getElementById('postContent').value = '';
-            document.getElementById('postImage').value = '';
-            document.getElementById('imagePreview').innerHTML = '';
-            
-            await this.loadFeed();
-        } catch (error) {
-            this.showToast(error.message, 'error');
-        }
-    }
-
-    async likePost(postId) {
-        try {
-            await this.apiCall('/react/like', {
-                method: 'POST',
-                body: JSON.stringify({ post_id: postId })
-            });
-            this.showToast('Post liked!', 'success');
-        } catch (error) {
-            console.error('Failed to like post:', error);
-        }
-    }
-
-    async sharePost(postId) {
-        try {
-            await this.apiCall('/react/share', {
-                method: 'POST',
-                body: JSON.stringify({ post_id: postId })
-            });
-            this.showToast('Post shared!', 'success');
-        } catch (error) {
-            console.error('Failed to share post:', error);
-        }
-    }
-
-    async addComment(postId) {
-        const commentInput = document.getElementById(`comment-${postId}`);
-        const comment = commentInput.value.trim();
-        
-        if (!comment) {
-            this.showToast('Please write a comment', 'warning');
-            return;
-        }
-
-        try {
-            await this.apiCall('/react/comment', {
-                method: 'POST',
-                body: JSON.stringify({ 
-                    post_id: postId, 
-                    comment: comment 
-                })
-            });
-            
-            this.showToast('Comment added!', 'success');
-            commentInput.value = '';
-            this.toggleComments(postId); // Refresh comments
-        } catch (error) {
-            console.error('Failed to add comment:', error);
-        }
-    }
+}
 
     toggleComments(postId) {
         const commentsSection = document.getElementById(`comments-${postId}`);
@@ -317,17 +708,6 @@ class CampusBuzz {
         }
     }
 
-    async loadComments(postId) {
-        // This would typically call an API endpoint to get comments
-        // For now, we'll just show a placeholder
-        const commentList = document.getElementById(`comment-list-${postId}`);
-        commentList.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i><p>Loading comments...</p></div>';
-        
-        // Simulate API call
-        setTimeout(() => {
-            commentList.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No comments yet. Be the first to comment!</p>';
-        }, 1000);
-    }
 
     updateStats() {
         document.getElementById('totalPosts').textContent = this.posts.length;
@@ -381,7 +761,25 @@ class CampusBuzz {
                 this.renderPosts();
             });
         });
+// Reaction buttons event delegation
+// Reaction buttons event delegation (for different reaction types)
+document.addEventListener('click', (e) => {
+    if (e.target.closest('.reaction-option')) {
+        const option = e.target.closest('.reaction-option');
+        const postId = option.closest('.reactions-picker').id.split('-')[2];
+        const reactionType = option.dataset.reaction;
+        app.reactToPost(postId, reactionType);
+    }
+});
 
+// Close reaction pickers when clicking outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.reaction-btn-container')) {
+        document.querySelectorAll('.reactions-picker').forEach(picker => {
+            picker.style.display = 'none';
+        });
+    }
+});
         // Navigation
         document.getElementById('logoutBtn').addEventListener('click', (e) => {
             e.preventDefault();

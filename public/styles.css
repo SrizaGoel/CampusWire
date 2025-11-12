@@ -744,3 +744,325 @@ body {
         justify-content: space-between;
     }
 }
+/* Improved Like Button Styles */
+.liked {
+    color: #007bff !important;
+}
+
+.liked i {
+    color: #007bff !important;
+}
+
+/* Post Stats Section */
+.post-stats {
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.likes-count {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.like-icons {
+    display: flex;
+    gap: 2px;
+}
+
+.like-icons i {
+    font-size: 0.8rem;
+    color: #007bff;
+    background: white;
+    border-radius: 50%;
+    padding: 2px;
+    border: 1px solid var(--border-color);
+}
+
+.like-icons i:nth-child(1) { transform: translateX(0); z-index: 3; }
+.like-icons i:nth-child(2) { transform: translateX(-4px); z-index: 2; }
+.like-icons i:nth-child(3) { transform: translateX(-8px); z-index: 1; }
+
+.count-text {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* Improved Comment UI */
+.no-comments, .error-comments {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+.no-comments i, .error-comments i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.comment-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.comment-item:last-child {
+    border-bottom: none;
+}
+
+.comment-avatar {
+    flex-shrink: 0;
+}
+
+.comment-avatar i {
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+}
+
+.comment-content {
+    flex: 1;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.comment-author {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.comment-time {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.comment-text {
+    color: var(--text-primary);
+    line-height: 1.4;
+    margin-bottom: 8px;
+}
+
+.comment-actions {
+    display: flex;
+    gap: 16px;
+}
+
+.comment-like-btn, .comment-reply-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.comment-like-btn:hover, .comment-reply-btn:hover {
+    background: var(--hover-color);
+    color: var(--text-primary);
+}
+
+/* Improved Comment Input */
+.comment-input {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+}
+
+.comment-input input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.comment-input button {
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.comment-input button:hover {
+    background: #0056b3;
+}
+/* Reactions Styles */
+.reaction-btn-container {
+    position: relative;
+}
+
+.reactions-picker {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: none;
+    gap: 8px;
+    z-index: 1000;
+}
+
+.reactions-picker.show {
+    display: flex;
+}
+
+.reaction-option {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    transition: transform 0.2s;
+}
+
+.reaction-option:hover {
+    transform: scale(1.2);
+}
+
+.reactions-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.reaction-icons {
+    display: flex;
+    gap: 2px;
+}
+
+.reaction-icons i {
+    font-size: 0.9rem;
+    background: white;
+    border-radius: 50%;
+    padding: 1px;
+    border: 1px solid var(--border-color);
+}
+
+.reactions-text {
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+}
+
+.reactions-text:hover {
+    text-decoration: underline;
+}
+/* Comments Count */
+.comments-count {
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.comments-count:hover {
+    background-color: var(--hover-color);
+}
+
+.comments-count-text {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.comments-count-text:hover {
+    color: var(--text-primary);
+    text-decoration: underline;
+}
+
+/* Unlike Option */
+.unlike-option {
+    color: #6c757d !important;
+    border-top: 1px solid var(--border-color) !important;
+    margin-top: 4px;
+    padding-top: 8px;
+    border-radius: 0 !important;
+}
+
+.unlike-option:hover {
+    color: #dc3545 !important;
+    background: #f8f9fa !important;
+}
+
+/* Likes Modal */
+.likes-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.like-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.like-item:last-child {
+    border-bottom: none;
+}
+
+.like-details {
+    flex: 1;
+}
+
+.reaction-type {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 2px 0;
+}
+
+.no-likes {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-secondary);
+}
+
+.no-likes i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Post Stats Layout */
+.post-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+/* Like Button Active State */
+.like-btn.active {
+    font-weight: 600;
+}
+
+.action-btn:hover {
+    background-color: var(--hover-color);
+}
