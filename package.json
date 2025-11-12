@@ -1,5 +1,5 @@
 {
-  "name": "campuswire-backend",
+  "name": "campus-buzz",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
@@ -7,15 +7,19 @@
     "dev": "nodemon server.js"
   },
   "dependencies": {
-    "bad-words": "^3.0.4",
     "bcrypt": "^5.1.0",
     "cors": "^2.8.5",
-    "dotenv": "^16.0.3",
+    "dotenv": "^16.0.0",
     "express": "^4.18.2",
+    "express-rate-limit": "^8.2.1",
+    "express-validator": "^7.3.0",
     "jsonwebtoken": "^9.0.0",
-    "mysql2": "^3.15.3"
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.2.0",
+    "nodemailer": "^6.9.4",
+    "winston": "^3.18.3"
   },
   "devDependencies": {
-    "nodemon": "^3.1.10"
+    "nodemon": "^2.0.20"
   }
 }

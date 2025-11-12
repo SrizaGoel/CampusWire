@@ -1,13 +1,18 @@
--- campuswire_schema.sql
+-- campuswire_schema.sql (FINAL)
 DROP DATABASE IF EXISTS campuswire_db;
 CREATE DATABASE campuswire_db;
 USE campuswire_db;
 
+-- ------------------------
+-- USERS TABLE
+-- ------------------------
 CREATE TABLE `User` (
   user_id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   email VARCHAR(150) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
+  is_verified TINYINT(1) NOT NULL DEFAULT 0,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
   dept VARCHAR(50),
   year INT,
   role ENUM('Student','Moderator','Admin') DEFAULT 'Student',
@@ -16,27 +21,37 @@ CREATE TABLE `User` (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
+-- ------------------------
+-- POSTS TABLE
+-- ------------------------
 CREATE TABLE `Post` (
   post_id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
   content TEXT NOT NULL,
+  image_path VARCHAR(255) DEFAULT NULL,
   emotion ENUM('Happy','Sad','Angry','Excited','Neutral') DEFAULT 'Neutral',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   status ENUM('Active','Flagged','Deleted') DEFAULT 'Active',
   FOREIGN KEY (user_id) REFERENCES `User`(user_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- ------------------------
+-- REACTION TABLE (Like/Comment)
+-- ------------------------
 CREATE TABLE `Reaction` (
   reaction_id INT AUTO_INCREMENT PRIMARY KEY,
   post_id INT NOT NULL,
   user_id INT NOT NULL,
-  type ENUM('Like','Comment') NOT NULL,
+  type ENUM('Like','Comment','Share') NOT NULL,
   comment_text TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (post_id) REFERENCES `Post`(post_id) ON DELETE CASCADE,
   FOREIGN KEY (user_id) REFERENCES `User`(user_id)
 ) ENGINE=InnoDB;
 
+-- ------------------------
+-- WARNING TABLE
+-- ------------------------
 CREATE TABLE `Warning` (
   warning_id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
@@ -45,6 +60,9 @@ CREATE TABLE `Warning` (
   FOREIGN KEY (user_id) REFERENCES `User`(user_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+-- ------------------------
+-- FESTIVAL THEME TABLE
+-- ------------------------
 CREATE TABLE `FestivalTheme` (
   theme_id INT AUTO_INCREMENT PRIMARY KEY,
   festival_name VARCHAR(100) NOT NULL,
@@ -57,6 +75,9 @@ CREATE TABLE `FestivalTheme` (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
+-- ------------------------
+-- EMOTION FEED
+-- ------------------------
 CREATE TABLE `EmotionFeed` (
   feed_id INT AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
@@ -67,6 +88,9 @@ CREATE TABLE `EmotionFeed` (
   FOREIGN KEY (suggested_post_id) REFERENCES `Post`(post_id)
 ) ENGINE=InnoDB;
 
+-- ------------------------
+-- REPORT TABLE
+-- ------------------------
 CREATE TABLE `Report` (
   report_id INT AUTO_INCREMENT PRIMARY KEY,
   post_id INT NOT NULL,
@@ -77,7 +101,22 @@ CREATE TABLE `Report` (
   FOREIGN KEY (reported_by) REFERENCES `User`(user_id)
 ) ENGINE=InnoDB;
 
+-- ------------------------
+-- EMAIL VERIFICATION TABLE
+-- ------------------------
+CREATE TABLE `EmailVerification` (
+  token VARCHAR(128) PRIMARY KEY,
+  user_id INT NOT NULL,
+  expires_at DATETIME NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES `User`(user_id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ------------------------
+-- TRIGGERS
+-- ------------------------
 DELIMITER $$
+
 CREATE TRIGGER prevent_duplicate_email
 BEFORE INSERT ON `User`
 FOR EACH ROW
@@ -86,9 +125,7 @@ BEGIN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Account already exists for this email.';
   END IF;
 END$$
-DELIMITER ;
 
-DELIMITER $$
 CREATE TRIGGER issue_warning_after_flag
 AFTER UPDATE ON `Post`
 FOR EACH ROW
@@ -105,40 +142,24 @@ BEGIN
     WHERE user_id = NEW.user_id;
   END IF;
 END$$
-DELIMITER ;
 
-DELIMITER $$
-CREATE TRIGGER update_user_on_warning_insert
-AFTER INSERT ON `Warning`
+-- automatic deactivation after warnings exceed 5
+CREATE TRIGGER deactivate_user_after_excessive_warnings
+AFTER UPDATE ON `User`
 FOR EACH ROW
 BEGIN
-  UPDATE `User`
-  SET warning_count = warning_count + 1,
-      warning_level = CASE
-        WHEN warning_count + 1 >= 3 THEN 'Red'
-        WHEN warning_count + 1 = 2 THEN 'Orange'
-        ELSE 'Green'
-      END
-  WHERE user_id = NEW.user_id;
+  IF NEW.warning_count >= 5 THEN
+    UPDATE `User` SET is_active = 0 WHERE user_id = NEW.user_id;
+  END IF;
 END$$
+
 DELIMITER ;
 
+-- ------------------------
+-- STORED PROCS & VIEWS (unchanged)
+-- ------------------------
 DELIMITER $$
-CREATE PROCEDURE update_warning_status(IN uid INT)
-BEGIN
-  DECLARE wcount INT DEFAULT 0;
-  SELECT warning_count INTO wcount FROM `User` WHERE user_id = uid;
-  UPDATE `User`
-  SET warning_level = CASE
-    WHEN wcount >= 3 THEN 'Red'
-    WHEN wcount = 2 THEN 'Orange'
-    ELSE 'Green'
-  END
-  WHERE user_id = uid;
-END$$
-DELIMITER ;
 
-DELIMITER $$
 CREATE PROCEDURE getEmotionFeed(IN uid INT)
 BEGIN
   DECLARE emo ENUM('Happy','Sad','Angry','Excited','Neutral');
@@ -164,17 +185,6 @@ BEGIN
 END$$
 DELIMITER ;
 
-CREATE VIEW TopActiveUsers AS
-SELECT U.user_id, U.name, COUNT(P.post_id) AS total_posts
-FROM `User` U LEFT JOIN `Post` P ON U.user_id = P.user_id
-GROUP BY U.user_id
-ORDER BY total_posts DESC;
-
-CREATE VIEW UserWarningSummary AS
-SELECT U.user_id, U.name, U.warning_level, U.warning_count, COUNT(W.warning_id) AS warnings_logged
-FROM `User` U LEFT JOIN `Warning` W ON U.user_id = W.user_id
-GROUP BY U.user_id;
-
 CREATE VIEW FlaggedPosts AS
 SELECT P.post_id, P.user_id, U.name AS author_name, P.content, P.created_at
 FROM `Post` P JOIN `User` U ON P.user_id = U.user_id
@@ -189,26 +199,7 @@ DO
 -- sample data
 INSERT INTO `User`(name, email, password, dept, year, role)
 VALUES
-('Alice Johnson','alice@university.edu','hashed_pw1','CSE',3,'Student'),
-('Bob Singh','bob@university.edu','hashed_pw2','ECE',2,'Student'),
-('Carol Mehta','carol@university.edu','hashed_pw3','ME',4,'Moderator'),
-('Admin User','admin@university.edu','hashed_pw_admin','AdminDept',0,'Admin');
-
-INSERT INTO `Post`(user_id, content, emotion) VALUES
-(1, 'Lovely day at campus! ☀️', 'Happy'),
-(2, 'Stressed about exams 😓', 'Sad'),
-(1, 'Club fest this weekend, everyone join!', 'Excited'),
-(2, 'This is an offensive test post with bad words', 'Angry');
-
-UPDATE `Post`
-SET status = 'Flagged'
-ORDER BY post_id DESC
-LIMIT 1;
-
-
-INSERT INTO `EmotionFeed`(user_id, emotion_preference) VALUES
-(1, 'Happy'),
-(2, 'Sad');
+('Admin','admin@mail.jiit.ac.in','hashed_pw_admin','AdminDept',0,'Admin');
 
 INSERT INTO `FestivalTheme`(festival_name, start_date, end_date, primary_color, secondary_color, background_image, banner_image)
 VALUES
