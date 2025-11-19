@@ -247,7 +247,10 @@ async createPost() {
                 <div class="reactions-count" id="reactions-${post.post_id}" onclick="app.showLikesModal(${post.post_id})">
                     <!-- Reactions will be loaded here -->
                 </div>
-                <div class="comments-count" id="comments-count-${post.post_id}">
+                <div class="comments-count"
+     id="comments-count-${post.post_id}"
+     onclick="app.toggleComments(${post.post_id})">
+
                     <!-- Comment count will be loaded here -->
                 </div>
             </div>

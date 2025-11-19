@@ -236,11 +236,11 @@ const domain = process.env.JIIT_DOMAIN;
 const appUrl = process.env.APP_URL;
 const JWT_SECRET = process.env.JWT_SECRET;
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: process.env.SMTP_PORT,
-  auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
-});
+// const transporter = nodemailer.createTransport({
+//   host: process.env.SMTP_HOST,
+//   port: process.env.SMTP_PORT,
+//   auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+// });
 
 function isJiitMail(email){ 
   return email.endsWith('@'+domain); 

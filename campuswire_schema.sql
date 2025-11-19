@@ -207,3 +207,4 @@ VALUES
 ('Christmas','2025-12-20','2025-12-26','#B30000','#FFFFFF','/themes/christmas_bg.png','/themes/christmas_banner.svg');
 
 -- end
+ALTER TABLE Reaction ADD COLUMN reaction_type ENUM('like', 'love', 'funny', 'insightful') DEFAULT 'like';
