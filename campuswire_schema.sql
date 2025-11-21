@@ -208,3 +208,12 @@ VALUES
 
 -- end
 ALTER TABLE Reaction ADD COLUMN reaction_type ENUM('like', 'love', 'funny', 'insightful') DEFAULT 'like';
+CREATE TABLE Followers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    follower_id INT NOT NULL,
+    following_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(follower_id, following_id),
+    FOREIGN KEY (follower_id) REFERENCES User(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (following_id) REFERENCES User(user_id) ON DELETE CASCADE
+);

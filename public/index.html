@@ -52,6 +52,54 @@
                 <div class="user-info">
                     <h3 id="userName">User Name</h3>
                     <p id="userDept">Department • Year</p>
+                    <!--<button id="followBtn" class="follow-btn">Follow</button> -->
+<!-- <div class="follow-stats">
+    <br>
+    <span id="followerCount">0 Followers</span>
+    <span id="followingCount">0 Following</span>
+
+    <div class="follow-buttons">
+        <button class="sidebar-btn small-btn" onclick="app.showFollowers()">
+            <i class="fas fa-users"></i> Followers
+        </button>
+        <button class="sidebar-btn small-btn" onclick="app.showFollowing()">
+            <i class="fas fa-user-friends"></i> Following
+        </button>
+    </div>
+</div>
+<br> -->
+<div class="follow-stats">
+
+    <!-- Numbers + labels row -->
+    <div class="counts-row">
+        <div class="count-box">
+            <div id="followerCount" class="count-number">0</div>
+            <div class="count-label">Followers</div>
+        </div>
+
+        <div class="count-box">
+            <div id="followingCount" class="count-number">0</div>
+            <div class="count-label">Following</div>
+        </div>
+    </div>
+
+    <br>
+
+    <!-- Buttons -->
+    <div class="follow-buttons">
+        <button class="sidebar-btn small-btn" onclick="app.showFollowers()">
+            <i class="fas fa-users"></i> Followers
+        </button>
+
+        <button class="sidebar-btn small-btn" onclick="app.showFollowing()">
+            <i class="fas fa-user-friends"></i> Following
+        </button>
+    </div>
+
+</div>
+
+
+
                     <div class="user-stats">
                         <span class="stat">
                             <i class="fas fa-exclamation-triangle"></i>
@@ -75,11 +123,11 @@
                 <h4>Emotion Filter</h4>
                 <div class="emotion-filters">
                     <button class="emotion-filter active" data-emotion="all">All</button>
-                    <button class="emotion-filter" data-emotion="Happy">😊 Happy</button>
-                    <button class="emotion-filter" data-emotion="Excited">🎉 Excited</button>
-                    <button class="emotion-filter" data-emotion="Neutral">😐 Neutral</button>
-                    <button class="emotion-filter" data-emotion="Sad">😢 Sad</button>
-                    <button class="emotion-filter" data-emotion="Angry">😠 Angry</button>
+                    <button class="emotion-filter" data-emotion="Happy">Happy</button>
+                    <button class="emotion-filter" data-emotion="Excited">Excited</button>
+                    <button class="emotion-filter" data-emotion="Neutral">Neutral</button>
+                    <button class="emotion-filter" data-emotion="Sad">Sad</button>
+                    <button class="emotion-filter" data-emotion="Angry">Angry</button>
                 </div>
             </div>
         </aside>
@@ -97,12 +145,12 @@
                                 <input type="file" id="postImage" accept="image/*" hidden>
                             </label>
                             <select id="postEmotion" class="emotion-select">
-                                <option value="Neutral">😐 How are you feeling?</option>
-                                <option value="Happy">😊 Happy</option>
-                                <option value="Excited">🎉 Excited</option>
-                                <option value="Neutral">😐 Neutral</option>
-                                <option value="Sad">😢 Sad</option>
-                                <option value="Angry">😠 Angry</option>
+                                <option value="Neutral">How are you feeling?</option>
+                                <option value="Happy">Happy</option>
+                                <option value="Excited">Excited</option>
+                                <option value="Neutral">Neutral</option>
+                                <option value="Sad">Sad</option>
+                                <option value="Angry">Angry</option>
                             </select>
                         </div>
                         <button id="submitPost" class="post-submit-btn">
@@ -226,5 +274,17 @@
         </div>
     </div>
 </div>
+<div id="followModal" class="modal">
+  <div class="modal-content follow-modal-box">
+      <div class="modal-header">
+          <h3 id="followModalTitle"></h3>
+          <span class="close" onclick="app.closeFollowModal()">&times;</span>
+      </div>
+      <div class="modal-body" id="followModalList">
+          <!-- list loads here -->
+      </div>
+  </div>
+</div>
+
 </body>
 </html>

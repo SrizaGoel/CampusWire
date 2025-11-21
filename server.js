@@ -10,6 +10,7 @@ const postRoutes = require('./routes/postRoutes');
 const reactionRoutes = require('./routes/reactionRoutes');
 const themeRoutes = require('./routes/themeRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const followRoutes = require('./routes/followRoutes');
 
 const app = express();
 
@@ -46,6 +47,8 @@ app.use('/posts', postRoutes);
 app.use('/react', reactionRoutes);
 app.use('/theme', themeRoutes);
 app.use('/admin', adminRoutes);
+app.use('/follow', followRoutes);
+app.use("/user", require("./routes/userRoutes"));
 
 // Global error handler
 app.use((error, req, res, next) => {

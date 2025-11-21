@@ -1081,3 +1081,64 @@ body {
 .nav-links .nav-link:hover {
     background: rgba(255, 255, 255, 0.25) !important;
 }
+.follow-btn {
+    padding: 9px 20px;
+    border-radius: 20px;
+    border: 2px solid var(--fest-primary);
+    background: transparent;
+    color: var(--fest-primary);
+    font-weight: 600;
+    transition: 0.2s ease;
+}
+
+.follow-btn:hover {
+    background: var(--fest-primary);
+    color: white;
+}
+
+.follow-btn.following {
+    border-color: #d90429;
+    background: #d90429;
+    color: white;
+}
+.click-profile {
+    cursor: pointer;
+    color: var(--fest-primary);
+    font-weight: 600;
+}
+.click-profile:hover {
+    text-decoration: underline;
+}
+.counts-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 5px;
+    margin-bottom: 5px;
+}
+
+.count-box {
+    text-align: center;
+    flex: 1;
+}
+
+.count-number {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.count-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.follow-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.small-btn {
+    padding: 8px;
+    font-size: 0.9rem;
+}

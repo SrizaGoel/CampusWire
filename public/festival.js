@@ -197,8 +197,9 @@
     root.style.setProperty("--fest-sidebar-bg", "#ffffff");
     root.style.setProperty("--fest-border", "rgba(0,0,0,0.15)");
     root.style.setProperty("--fest-banner-bg", "none");
-    root.style.setProperty("--fest-nav-start", th.primary);
-    root.style.setProperty("--fest-nav-end", th.secondary);
+root.style.setProperty("--fest-nav-start", "#1e293b");
+root.style.setProperty("--fest-nav-end", "#60a5fa");
+
 
 
     document.getElementById("festivalName").textContent = "Welcome to Campus Buzz";

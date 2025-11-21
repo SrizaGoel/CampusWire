@@ -8,24 +8,43 @@ class CampusBuzz {
     }
 
     async init() {
-        if (!this.token) {
-            window.location.href = '/login.html';
-            return;
-        }
+    const urlParams = new URLSearchParams(window.location.search);
+    const profileId = urlParams.get("user");
 
-        await this.loadCurrentUser();
-        await this.loadTheme();
-        await this.loadFeed();
-        this.setupEventListeners();
-        this.updateUI();
+    // -------------------------
+    // PROFILE PAGE → NO LOGIN REQUIRED
+    // -------------------------
+    if (profileId) {
+        await this.loadProfile(Number(profileId));
+        return;
     }
+
+    // -------------------------
+    // HOME FEED → LOGIN REQUIRED
+    // -------------------------
+    if (!this.token) {
+        window.location.href = "/login.html";
+        return;
+    }
+
+    await this.loadCurrentUser();
+    await this.loadTheme();
+    await this.loadFeed();
+    this.setupEventListeners();
+    this.updateUI();
+}
+
+
+
+
 
     async apiCall(endpoint, options = {}) {
         const config = {
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${this.token}`
-            },
+           headers: {
+    'Content-Type': 'application/json',
+    ...(this.token ? { 'Authorization': `Bearer ${this.token}` } : {})
+},
+
             ...options
         };
 
@@ -35,10 +54,17 @@ class CampusBuzz {
             
             if (!response.ok) {
                 if (response.status === 401) {
-                    this.logout();
-                    throw new Error('Session expired');
-                }
-                throw new Error(data.error || 'Request failed');
+
+    // Allow profile.html to load even without login
+    if (window.location.pathname.includes("profile.html")) {
+        console.warn("401 ignored on profile page");
+        return {};
+    }
+
+    this.logout();
+    throw new Error('Session expired');
+}
+
             }
             
             return data;
@@ -68,9 +94,17 @@ class CampusBuzz {
             throw new Error('Failed to verify token');
         }
     }
+    async loadFollowStats(userId) {
+    const followers = await this.apiCall(`/follow/followers/${userId}`);
+    const following = await this.apiCall(`/follow/following/${userId}`);
+
+    document.getElementById('followerCount').textContent = `${followers.followers} Followers`;
+    document.getElementById('followingCount').textContent = `${following.following} Following`;
+}
 
     updateUserInfo() {
         if (!this.currentUser) return;
+        
 
         document.getElementById('userName').textContent = this.currentUser.name;
         document.getElementById('userDept').textContent = 
@@ -80,6 +114,7 @@ class CampusBuzz {
         if (this.currentUser.role === 'Admin') {
             document.body.classList.add('user-admin');
         }
+        this.loadFollowStats(this.currentUser.user_id);
     }
 
     async loadTheme() {
@@ -220,15 +255,16 @@ async createPost() {
     return `
         <div class="post-card" data-post-id="${post.post_id}">
             <div class="post-header">
-                <div class="post-user">
-                    <div class="user-avatar-small">
-                        <i class="fas fa-user-circle"></i>
-                    </div>
-                    <div class="user-details">
-                        <h4>${post.name}</h4>
-                        <div class="post-meta">${timeAgo}</div>
-                    </div>
-                </div>
+                <div class="post-user" onclick="app.openProfile(${post.user_id})" style="cursor:pointer;">
+    <div class="user-avatar-small">
+        <i class="fas fa-user-circle"></i>
+    </div>
+    <div class="user-details">
+        <h4 class="user-name-link">${post.name}</h4>
+        <div class="post-meta">${timeAgo}</div>
+    </div>
+</div>
+
                 <span class="post-emotion ${emotionClass}">${post.emotion}</span>
             </div>
             
@@ -618,6 +654,49 @@ async likePost(postId) {
     //         console.error('Failed to share post:', error);
     //     }
     // }
+async showFollowers() {
+    const userId = this.currentUser.user_id;
+    const data = await this.apiCall(`/follow/followers/${userId}`);
+
+    document.getElementById("followModalTitle").textContent = "Followers";
+
+    const box = document.getElementById("followModalList");
+    box.innerHTML = data.list.length
+        ? data.list.map(u => `
+            <div class="follow-user" onclick="app.openProfile(${u.user_id})">
+                <i class="fas fa-user-circle"></i>
+                <div>
+                    <strong>${u.name}</strong>
+                    <div class="small-text">${u.dept} • Year ${u.year}</div>
+                </div>
+            </div>
+        `).join('')
+        : `<p>No followers yet.</p>`;
+
+    document.getElementById("followModal").style.display = "block";
+}
+
+async showFollowing() {
+    const userId = this.currentUser.user_id;
+    const data = await this.apiCall(`/follow/following/${userId}`);
+
+    document.getElementById("followModalTitle").textContent = "Following";
+
+    const box = document.getElementById("followModalList");
+    box.innerHTML = data.list.length
+        ? data.list.map(u => `
+            <div class="follow-user" onclick="app.openProfile(${u.user_id})">
+                <i class="fas fa-user-circle"></i>
+                <div>
+                    <strong>${u.name}</strong>
+                    <div class="small-text">${u.dept} • Year ${u.year}</div>
+                </div>
+            </div>
+        `).join('')
+        : `<p>Not following anyone yet.</p>`;
+
+    document.getElementById("followModal").style.display = "block";
+}
 
     async addComment(postId) {
     const commentInput = document.getElementById(`comment-${postId}`);
@@ -768,11 +847,19 @@ async loadComments(postId) {
 // Reaction buttons event delegation (for different reaction types)
 document.addEventListener('click', (e) => {
     if (e.target.closest('.reaction-option')) {
+        
         const option = e.target.closest('.reaction-option');
         const postId = option.closest('.reactions-picker').id.split('-')[2];
         const reactionType = option.dataset.reaction;
         app.reactToPost(postId, reactionType);
     }
+});
+document.getElementById("followerCount").addEventListener("click", () => {
+    this.showFollowers();
+});
+
+document.getElementById("followingCount").addEventListener("click", () => {
+    this.showFollowing();
 });
 
 // Close reaction pickers when clicking outside
@@ -815,6 +902,14 @@ document.addEventListener('click', (e) => {
                 e.target.style.display = 'none';
             }
         });
+//         // Follow button (profile)
+// const followBtn = document.getElementById("followBtn");
+// if (followBtn) {
+//     followBtn.addEventListener("click", () => {
+//         app.toggleFollow(app.currentUser.user_id);
+//     });
+// }
+
     }
 
     previewImage(input) {
@@ -1008,6 +1103,167 @@ document.addEventListener('click', (e) => {
     updateUI() {
         // Additional UI updates can go here
     }
+    
+openProfile(userId) {
+    window.location.href = `/profile.html?user=${userId}`;
+}
+
+async loadProfile(userId) {
+    try {
+        const data = await this.apiCall(`/user/${userId}`);
+        // Attach follow button click
+
+
+        // Update basic profile info
+        document.getElementById("profileName").textContent = data.name;
+        document.getElementById("profileDept").textContent = `${data.dept} • Year ${data.year}`;
+        document.getElementById("warningCount").textContent = data.warning_count || 0;
+        
+        // Update additional details
+        document.getElementById("academicInfo").textContent = `${data.dept} Department, Year ${data.year}`;
+        document.getElementById("memberSince").textContent = new Date(data.created_at).toLocaleDateString();
+        document.getElementById("campusStatus").textContent = data.warning_count > 0 ? 
+            '⚠️ Has warnings' : '✅ Active member';
+
+        // Load follow stats and button
+        await this.loadFollowStats(userId);
+        await this.updateFollowButton(userId);
+        
+        // Load user posts
+        await this.loadUserPosts(userId);
+        
+        const btn = document.getElementById("followBtn");
+if (btn) {
+    btn.onclick = () => this.toggleFollow(userId);
+}
+        
+    } catch (error) {
+        console.error('Failed to load profile:', error);
+        this.showToast('Failed to load profile', 'error');
+    }
+}
+
+async loadFollowStats(userId) {
+    try {
+        const followers = await this.apiCall(`/follow/followers/${userId}`);
+        const following = await this.apiCall(`/follow/following/${userId}`);
+        
+        // Update the count displays
+        document.getElementById('followerCount').textContent = followers.count || followers.followers || 0;
+        document.getElementById('followingCount').textContent = following.count || following.following || 0;
+        
+    } catch (error) {
+        console.error('Failed to load follow stats:', error);
+        document.getElementById('followerCount').textContent = '0';
+        document.getElementById('followingCount').textContent = '0';
+    }
+}
+
+async toggleFollow(targetId) {
+    if (!targetId) {
+        console.error("No target user ID passed to toggleFollow");
+        return;
+    }
+
+    const btn = document.getElementById("followBtn");
+    if (!btn) return;
+
+    try {
+        // Disable button during operation
+        btn.disabled = true;
+        
+        const check = await this.apiCall(`/follow/is-following/${targetId}`);
+
+        let response;
+        if (check.isFollowing) {
+            response = await this.apiCall('/follow/unfollow', {
+                method: "POST",
+                body: JSON.stringify({ target_id: targetId })
+            });
+        } else {
+            response = await this.apiCall('/follow/follow', {
+                method: "POST",
+                body: JSON.stringify({ target_id: targetId })
+            });
+        }
+
+        // Update UI immediately
+        await this.updateFollowButton(targetId);
+        await this.loadFollowStats(targetId);
+        
+        this.showToast(check.isFollowing ? 'Unfollowed' : 'Following', 'success');
+        
+    } catch (error) {
+        console.error('Follow toggle failed:', error);
+        this.showToast('Operation failed', 'error');
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+async updateFollowButton(targetId) {
+    const btn = document.getElementById("followBtn");
+    if (!btn) return;
+
+    try {
+        const check = await this.apiCall(`/follow/is-following/${targetId}`);
+        
+        btn.textContent = check.isFollowing ? "Following" : "Follow";
+        btn.classList.toggle("following", check.isFollowing);
+        
+        // Update click handler
+        btn.onclick = () => this.toggleFollow(targetId);
+        
+    } catch (error) {
+        console.error('Failed to update follow button:', error);
+    }
+}
+
+async loadUserPosts(userId) {
+    try {
+        const posts = await this.apiCall(`/posts/user/${userId}`);
+        const container = document.getElementById('userPostsList');
+        
+        if (posts.length === 0) {
+            container.innerHTML = `
+                <div class="no-posts" style="text-align: center; padding: 40px; color: var(--fest-text); opacity: 0.7;">
+                    <i class="fas fa-comments" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                    <h3>No posts yet</h3>
+                    <p>This user hasn't shared anything yet</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Display first 5 posts
+        const recentPosts = posts.slice(0, 5);
+        container.innerHTML = recentPosts.map(post => `
+            <div class="post-card" style="margin-bottom: 15px;">
+                <div class="post-content">
+                    <p>${this.escapeHTML(post.content)}</p>
+                </div>
+                ${post.image_path ? `
+                    <div class="post-image">
+                        <img src="${post.image_path}" alt="Post image" style="max-height: 200px;">
+                    </div>
+                ` : ''}
+                <div class="post-meta" style="font-size: 0.8rem; color: var(--fest-text); opacity: 0.7; margin-top: 10px;">
+                    ${this.getTimeAgo(new Date(post.created_at))} • ${post.emotion}
+                </div>
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        console.error('Failed to load user posts:', error);
+        document.getElementById('userPostsList').innerHTML = `
+            <div style="text-align: center; padding: 20px; color: var(--fest-text); opacity: 0.7;">
+                Failed to load posts
+            </div>
+        `;
+    }
+}
+
+
 }
 
 // Global functions for HTML onclick handlers

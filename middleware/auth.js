@@ -35,6 +35,7 @@
 // }
 
 // module.exports = auth;
+
 const jwt = require('jsonwebtoken');
 const pool = require('../db');
 require('dotenv').config();
